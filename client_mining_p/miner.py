@@ -93,5 +93,6 @@ if __name__ == '__main__':
             print(data)
             coins += 1
         else:
+            ending_time = time.time()
             print(data['message'])
             print(f"Time taken for Proof to valid: {ending_time - starting_time} ")
