@@ -98,15 +98,15 @@ def mine():
     #Acquire the POST request
     data = request.get_json()
     #Check for id and proof sent
-    if data["proof"] is None or data["id"] is None:
+    if data['proof'] is None and data['id'] is None:
         return jsonify({'message':"You didn't send the proof or id with your request"}),400
 
     #Check for proof
     #Acquire the string 
-    block_string = json.dumps(blockchain.last_block, sort_keys=True).encode()
+    block_string = json.dumps(blockchain.last_block, sort_keys=True)
 
     #Now perform validation on the proof sent
-    valid_proof = blockchain.valid_proof(block_string,data["proof"])
+    valid_proof = blockchain.valid_proof(block_string,data['proof'])
 
     #Set up responses for True or False for validating proof
     if valid_proof:
@@ -116,11 +116,11 @@ def mine():
         previous_hash = blockchain.hash(last_block)
 
         #generate new block using previous hash
-        new_block = blockchain.new_block(data["proof"],previous_hash)
+        new_block = blockchain.new_block(data['proof'],previous_hash)
 
         #Send new block as response
         response = {
-            'message':"New Block created",
+            'message':"New Block Forged",
             'index':new_block['index'],
             'timestamp':new_block['timestamp'],
             'transaction':new_block['transactions'],
@@ -146,4 +146,4 @@ def last_block():
     return jsonify(response),200
 # Run the program on port 5000
 if __name__ == '__main__':
-    app.run(host='192.168.0.134', port=5000, debug=True)
+    app.run(host='localhost', port=5000, debug=True)
