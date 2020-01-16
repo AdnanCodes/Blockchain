@@ -1,3 +1,5 @@
+# Paste your version of blockchain.py from the basic_block_gp
+# folder here
 import hashlib
 import json
 from time import time
@@ -63,19 +65,7 @@ class Blockchain(object):
     @property
     def last_block(self):
         return self.chain[-1]
-    def proof_of_work(self, block):
-        """
-        Simple Proof of Work Algorithm
-        Stringify the block and look for a proof.
-        Loop through possibilities, checking each one against `valid_proof`
-        in an effort to find a number that is a valid proof
-        :return: A valid proof for the provided block
-        """
-        block_string = json.dumps(block)
-        proof = 0
-        while self.valid_proof(block_string, proof) is False:
-            proof += 1
-        return proof
+
     @staticmethod
     def valid_proof(block_string, proof):
         """
@@ -90,24 +80,56 @@ class Blockchain(object):
         """
         guess = f"{block_string}{proof}".encode()
         guess_hash = hashlib.sha256(guess).hexdigest()
-        return guess_hash[:3] == "000"
+        return guess_hash[:6] == "000000"
 # Instantiate our Node
 app = Flask(__name__)
 # Generate a globally unique address for this node
 node_identifier = str(uuid4()).replace('-', '')
 # Instantiate the Blockchain
 blockchain = Blockchain()
-@app.route('/mine', methods=['GET'])
+@app.route('/mine', methods=['POST'])
 def mine():
     # Run the proof of work algorithm to get the next proof
-    proof = blockchain.proof_of_work(blockchain.last_block)
+    # proof = blockchain.proof_of_work(blockchain.last_block)
     # Forge the new Block by adding it to the chain with the proof
-    previous_hash = blockchain.hash(blockchain.last_block)
-    block = blockchain.new_block(proof, previous_hash)
-    response = {
-        'new_block': block
-    }
-    return jsonify(response), 200
+    # previous_hash = blockchain.hash(blockchain.last_block)
+    # block = blockchain.new_block(proof, previous_hash)
+
+    #Acquire the POST request
+    data = request.get_json()
+    #Check for id and proof sent
+    if data['proof'] is None and data['id'] is None:
+        return jsonify({'message':"You didn't send the proof or id with your request"}),400
+
+    #Check for proof
+    #Acquire the string 
+    block_string = json.dumps(blockchain.last_block, sort_keys=True)
+
+    #Now perform validation on the proof sent
+    valid_proof = blockchain.valid_proof(block_string,data['proof'])
+
+    #Set up responses for True or False for validating proof
+    if valid_proof:
+        #When true for proof, create new block
+        last_block = blockchain.last_block
+        #Find previous hash of the last block
+        previous_hash = blockchain.hash(last_block)
+
+        #generate new block using previous hash
+        new_block = blockchain.new_block(data['proof'],previous_hash)
+
+        #Send new block as response
+        response = {
+            'message':"New Block Forged",
+            'index':new_block['index'],
+            'timestamp':new_block['timestamp'],
+            'transaction':new_block['transactions'],
+            'proof':new_block['proof'],
+            'previous_hash':new_block['previous_hash']
+        }
+        return jsonify(response),200
+    else:
+        return jsonify({'message':"Proof is NOT true"}),400
 @app.route('/chain', methods=['GET'])
 def full_chain():
     response = {
@@ -116,6 +138,12 @@ def full_chain():
         'chain': blockchain.chain
     }
     return jsonify(response), 200
+@app.route('/last_block', methods=['GET'])
+def last_block():
+    response = {
+        'last_block':blockchain.last_block
+    }
+    return jsonify(response),200
 # Run the program on port 5000
 if __name__ == '__main__':
-    app.run(host='localhosts, port=5000, debug=True)
+    app.run(host='localhost', port=5000, debug=True)
