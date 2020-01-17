@@ -10,6 +10,7 @@
     "node-sass": "^4.13.1",
     "react": "^16.12.0",
     "react-dom": "^16.12.0",
+    "react-hook-form": "^4.5.5",
     "react-scripts": "3.3.0",
     "yarn-upgrade-all": "^0.5.2"
   },

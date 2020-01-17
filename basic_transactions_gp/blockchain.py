@@ -5,12 +5,16 @@ import json
 from time import time
 from uuid import uuid4
 from flask import Flask, jsonify, request
+from flask_cors import CORS
+
+
 class Blockchain(object):
     def __init__(self):
         self.chain = []
         self.current_transactions = []
         # Create the genesis block
-        self.new_block(1 ,100)
+        self.new_block(1, 100)
+
     def new_block(self, proof, previous_hash=None):
         """
         Create a new Block in the Blockchain
@@ -37,6 +41,7 @@ class Blockchain(object):
         self.chain.append(block)
         # Return the new block
         return block
+
     def hash(self, block):
         """
         Creates a SHA-256 hash of a Block
@@ -62,6 +67,7 @@ class Blockchain(object):
         # easier to work with and understand
         # TODO: Return the hashed block string in hexadecimal format
         return hex_hash
+
     @property
     def last_block(self):
         return self.chain[-1]
@@ -93,6 +99,7 @@ class Blockchain(object):
         guess = f"{block_string}{proof}".encode()
         guess_hash = hashlib.sha256(guess).hexdigest()
         return guess_hash[:3] == "000"
+
     def new_transaction(self, sender, recipient, amount):
         """
         Creates a new transaction to go into the next mined block
@@ -107,8 +114,11 @@ class Blockchain(object):
             'amount': amount
         })
         return self.last_block['index'] + 1
+
+
 # Instantiate our Node
 app = Flask(__name__)
+CORS(app)
 # Generate a globally unique address for this node
 node_identifier = str(uuid4()).replace('-', '')
 # Instantiate the Blockchain
@@ -128,6 +138,8 @@ def new_transaction():
         'message': f'Transaction will post to block {index}.'
     }
     return jsonify(response), 201
+
+
 @app.route('/mine', methods=['POST'])
 def mine():
     # There will be something called request here
@@ -156,6 +168,8 @@ def mine():
             'message': 'Proof is invalid or already submitted'
         }
     return jsonify(response), 200
+
+
 @app.route('/chain', methods=['GET'])
 def full_chain():
     response = {
@@ -164,12 +178,16 @@ def full_chain():
         'chain': blockchain.chain
     }
     return jsonify(response), 200
+
+
 @app.route('/last_block',  methods=['GET'])
 def last_block():
     response = {
         'last_block': blockchain.last_block
     }
     return jsonify(response), 200
+
+
 # Run the program on port 5000
 if __name__ == '__main__':
     app.run(host='localhost', port=5000, debug=True)
